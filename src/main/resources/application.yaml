@@ -1,0 +1,7 @@
+spring:
+  logging:
+    level: DEBUG
+
+configuration:
+  maxThread: 10
+  numVNode: 10
