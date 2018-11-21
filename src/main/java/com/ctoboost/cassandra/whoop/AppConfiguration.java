@@ -1,7 +1,6 @@
 package com.ctoboost.cassandra.whoop;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
@@ -10,22 +9,32 @@ public class AppConfiguration {
 
     private int maxThread = 10;
 
-    private int numVNode = 10;
+    private int numVNode = 80;
 
-    private int maxKeys = 1000000; // 1M keys
+    private int maxDays = 60; // 60 days
 
     private int maxUsers = 10000;
 
-    public void setMaxKeys(int maxKeys) {
-        this.maxKeys = maxKeys;
+    private int startUser = 1;
+
+    public void setStartUser(int startUser) {
+        this.startUser = startUser;
+    }
+
+    public int getStartUser() {
+        return startUser;
+    }
+
+    public void setMaxDays(int maxDays) {
+        this.maxDays = maxDays;
     }
 
     public void setMaxUsers(int maxUsers) {
         this.maxUsers = maxUsers;
     }
 
-    public int getMaxKeys() {
-        return maxKeys;
+    public int getMaxDays() {
+        return maxDays;
     }
 
     public int getMaxUsers() {

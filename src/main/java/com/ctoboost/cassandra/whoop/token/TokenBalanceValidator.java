@@ -3,7 +3,9 @@ package com.ctoboost.cassandra.whoop.token;
 
 import com.ctoboost.cassandra.whoop.AppConfiguration;
 import com.ctoboost.cassandra.whoop.MurmurHash;
+import com.ctoboost.cassandra.whoop.key.WhoopKeyGenerator;
 import com.ctoboost.cassandra.whoop.key.iKeyGenerator;
+import com.ctoboost.cassandra.whoop.range.TokenRangeHolder;
 import com.ctoboost.cassandra.whoop.range.iRangeHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,12 +34,13 @@ public class TokenBalanceValidator {
 
     public TokenBalanceValidator(){
 
-
+        keyGenerator = new WhoopKeyGenerator();
+        rangeHolder = new TokenRangeHolder();
     }
 
     public void run(){
-        ConcurrentLinkedQueue queue = new ConcurrentLinkedQueue<ByteBuffer[]>();
         keyGenerator.init(myConfig);
+        rangeHolder.init(myConfig);
         ExecutorService executor = Executors.newFixedThreadPool(myConfig.getMaxThread());
 
         AtomicInteger validCount = new AtomicInteger(0);
@@ -47,16 +50,15 @@ public class TokenBalanceValidator {
 
                     ByteBuffer[] buf = keyGenerator.getBatchKeys();
                     if (buf!=null) {
-                        validCount.addAndGet(buf.length);
                         for(ByteBuffer item : buf){
                             rangeHolder.put(getToken(item));
                         }
                     }
                     else{
                         logger.info("No more key generated. ");
+                        validCount.addAndGet(1);
                         break;
                     }
-
                 }
             } catch (Exception e) {
                 logger.error("Exception in sending data " + e.getMessage());
@@ -71,16 +73,21 @@ public class TokenBalanceValidator {
         while (true){
             try {
                 Thread.sleep(1000);
+                if (validCount.get()==myConfig.getMaxThread()){
+                    executor.shutdown();
+                    break;
+                }
 
             }
             catch(Exception ex){
 
             }
-
         }
+
+        logger.info(rangeHolder.toString());
     }
 
-    private long getToken(ByteBuffer key){
+    public static long getToken(ByteBuffer key){
 
         final long MIN_VALUE = 0x8000000000000000L;
         if (key.remaining()==0){
